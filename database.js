@@ -31,17 +31,33 @@ function initializeDB() {
     else console.log(' Table utilisateurs créée/vérifiée');
   });
 
+  // TABLE CATÉGORIES
+  db.run(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT UNIQUE NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      description TEXT,
+      date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('❌ Erreur table categories:', err);
+    else console.log('✅ Table categories créée/vérifiée');
+  });
+
   // TABLE POSTS
   db.run(`
     CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       utilisateur_id INTEGER NOT NULL,
+      categorie_id INTEGER,
       titre TEXT NOT NULL,
       contenu TEXT NOT NULL,
       nb_vues INTEGER DEFAULT 0,
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
       date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+      FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
+      FOREIGN KEY (categorie_id) REFERENCES categories(id) ON DELETE SET NULL
     )
   `, (err) => {
     if (err) console.error(' Erreur table posts:', err);
@@ -103,6 +119,11 @@ function initializeDB() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(utilisateur_id)`, (err) => {
     if (err) console.error(' Erreur index posts_user_id:', err);
     else console.log(' Index idx_posts_user_id créé');
+  });
+
+  db.run(`CREATE INDEX IF NOT EXISTS idx_posts_categorie_id ON posts(categorie_id)`, (err) => {
+    if (err) console.error(' Erreur index posts_categorie_id:', err);
+    else console.log(' Index idx_posts_categorie_id créé');
   });
 
   db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_post_id ON commentaires(post_id)`, (err) => {
@@ -186,6 +207,25 @@ function insererCommentaire(post_id, utilisateur_id, contenu) {
   });
 }
 
+// Insérer une catégorie
+function insererCategorie(nom, slug, description = '') {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO categories (nom, slug, description) VALUES (?, ?, ?)`,
+      [nom, slug, description],
+      function(err) {
+        if (err) {
+          console.error('❌ Erreur insertion catégorie:', err);
+          reject(err);
+        } else {
+          console.log('✅ Catégorie insérée avec l\'ID:', this.lastID);
+          resolve(this.lastID);
+        }
+      }
+    );
+  });
+}
+
 // ==================== FONCTIONS SELECT ====================
 
 // Récupérer tous les utilisateurs
@@ -197,6 +237,21 @@ function obtenirUtilisateurs() {
         reject(err);
       } else {
         console.log(' Utilisateurs récupérés:', rows.length);
+        resolve(rows);
+      }
+    });
+  });
+}
+
+// Récupérer toutes les catégories
+function obtenirCategories() {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM categories ORDER BY nom`, (err, rows) => {
+      if (err) {
+        console.error('❌ Erreur SELECT catégories:', err);
+        reject(err);
+      } else {
+        console.log('✅ Catégories récupérées:', rows.length);
         resolve(rows);
       }
     });
@@ -292,6 +347,7 @@ function obtenirPostsAvecFiltres(options = {}) {
     user_id = null,
     filtre_mine = false,        // true = afficher seulement mes posts
     filtre_likes = false,       // true = afficher seulement les posts que j'ai aimés
+    categorie_id = null,        // ID de la catégorie
     limit = 10,
     offset = 0
   } = options;
@@ -300,11 +356,13 @@ function obtenirPostsAvecFiltres(options = {}) {
     let query = `
       SELECT p.*,
              u.pseudo as auteur,
-             COUNT(DISTINCT c.id) as nb_commentaires,
+             c.nom as categorie_nom,
+             COUNT(DISTINCT co.id) as nb_commentaires,
              COUNT(DISTINCT lp.id) as nb_likes
       FROM posts p
       LEFT JOIN utilisateurs u ON p.utilisateur_id = u.id
-      LEFT JOIN commentaires c ON p.id = c.post_id
+      LEFT JOIN categories c ON p.categorie_id = c.id
+      LEFT JOIN commentaires co ON p.id = co.post_id
       LEFT JOIN likes_posts lp ON p.id = lp.post_id
       WHERE 1=1
     `;
@@ -324,6 +382,12 @@ function obtenirPostsAvecFiltres(options = {}) {
         WHERE l.post_id = p.id AND l.utilisateur_id = ?
       )`;
       params.push(user_id);
+    }
+
+    // Filtre "Catégorie"
+    if (categorie_id) {
+      query += ` AND p.categorie_id = ?`;
+      params.push(categorie_id);
     }
 
     // Grouper et trier
@@ -411,9 +475,11 @@ module.exports = {
   insererUtilisateur,
   insererPost,
   insererCommentaire,
+  insererCategorie,
   
   // SELECT
   obtenirUtilisateurs,
+  obtenirCategories,
   obtenirPosts,
   obtenirCommentairesParPost,
   obtenirUtilisateurParPseudo,

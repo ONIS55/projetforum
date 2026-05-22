@@ -35,6 +35,20 @@ function initializeDB() {
     else console.log('✅ Table utilisateurs créée');
   });
 
+  // TABLE CATEGORIES
+  db.run(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom TEXT UNIQUE NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      description TEXT,
+      date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `, (err) => {
+    if (err) console.error('❌ Erreur table categories:', err);
+    else console.log('✅ Table categories créée');
+  });
+
   // TABLE POSTS
   db.run(`
     CREATE TABLE IF NOT EXISTS posts (
@@ -42,10 +56,12 @@ function initializeDB() {
       utilisateur_id INTEGER NOT NULL,
       titre TEXT NOT NULL,
       contenu TEXT NOT NULL,
+      categorie_id INTEGER,
       nb_vues INTEGER DEFAULT 0,
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
       date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+      FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
+      FOREIGN KEY (categorie_id) REFERENCES categories(id) ON DELETE SET NULL
     )
   `, (err) => {
     if (err) console.error('❌ Erreur table posts:', err);
@@ -110,6 +126,11 @@ function initializeDB() {
     db.run(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(utilisateur_id)`, (err) => {
       if (err) console.error('❌ Erreur index posts_user_id:', err);
       else console.log('✅ Index idx_posts_user_id créé');
+    });
+
+    db.run(`CREATE INDEX IF NOT EXISTS idx_posts_categorie_id ON posts(categorie_id)`, (err) => {
+      if (err) console.error('❌ Erreur index posts_categorie_id:', err);
+      else console.log('✅ Index idx_posts_categorie_id créé');
     });
 
     db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_post_id ON commentaires(post_id)`, (err) => {
