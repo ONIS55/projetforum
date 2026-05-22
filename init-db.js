@@ -101,6 +101,38 @@ function initializeDB() {
     else console.log('✅ Table likes_commentaires créée');
   });
 
+  // ==================== CRÉER LES INDEX (Performance) ====================
+  
+  // Attendre 1 seconde que les tables soient créées
+  setTimeout(() => {
+    console.log('\n📇 Création des index...\n');
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(utilisateur_id)`, (err) => {
+      if (err) console.error('❌ Erreur index posts_user_id:', err);
+      else console.log('✅ Index idx_posts_user_id créé');
+    });
+
+    db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_post_id ON commentaires(post_id)`, (err) => {
+      if (err) console.error('❌ Erreur index commentaires_post_id:', err);
+      else console.log('✅ Index idx_commentaires_post_id créé');
+    });
+
+    db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_user_id ON commentaires(utilisateur_id)`, (err) => {
+      if (err) console.error('❌ Erreur index commentaires_user_id:', err);
+      else console.log('✅ Index idx_commentaires_user_id créé');
+    });
+
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_posts_unique ON likes_posts(utilisateur_id, post_id)`, (err) => {
+      if (err) console.error('❌ Erreur index likes_posts_unique:', err);
+      else console.log('✅ Index idx_likes_posts_unique créé');
+    });
+
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_commentaires_unique ON likes_commentaires(utilisateur_id, commentaire_id)`, (err) => {
+      if (err) console.error('❌ Erreur index likes_commentaires_unique:', err);
+      else console.log('✅ Index idx_likes_commentaires_unique créé');
+    });
+  }, 1000);
+
   // Attendre et afficher les tables
   setTimeout(() => {
     console.log('\n📋 === VÉRIFICATION DES TABLES ===\n');
@@ -141,5 +173,5 @@ function initializeDB() {
         });
       });
     });
-  }, 1500);
+  }, 2500);
 }

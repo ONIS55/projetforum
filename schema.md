@@ -124,7 +124,34 @@ CREATE TABLE likes_commentaires (
 
 ---
 
-## 📝 Requêtes SQL principales
+## � Index (Performance)
+
+Les index améliorent les **performances des requêtes**. Voici les index créés :
+
+```sql
+CREATE INDEX idx_posts_user_id ON posts(utilisateur_id);
+CREATE INDEX idx_commentaires_post_id ON commentaires(post_id);
+CREATE INDEX idx_commentaires_user_id ON commentaires(utilisateur_id);
+CREATE UNIQUE INDEX idx_likes_posts_unique ON likes_posts(utilisateur_id, post_id);
+CREATE UNIQUE INDEX idx_likes_commentaires_unique ON likes_commentaires(utilisateur_id, commentaire_id);
+```
+
+### 🚀 Avantages des index :
+
+- **Requêtes SELECT** 10-100x plus rapides
+- **UNIQUE INDEX** empêche les doublons
+- **Performance** escalable (la BDD peut grandir)
+
+### 📊 Exemples de requêtes accélérées :
+
+```sql
+-- Sans index : Scan complet (lent)
+SELECT * FROM posts WHERE utilisateur_id = 1;
+
+-- Avec index : Accès direct (rapide ⚡)
+```
+
+---
 
 ### ✅ CREATE - Créer une table
 ```sql

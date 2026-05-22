@@ -4,9 +4,9 @@ const path = require('path');
 // Connexion à la base de données
 const db = new sqlite3.Database('./Base.db', (err) => {
   if (err) {
-    console.error('❌ Erreur de connexion:', err);
+    console.error(' Erreur de connexion:', err);
   } else {
-    console.log('✅ Connecté à SQLite');
+    console.log(' Connecté à SQLite');
     initializeDB();
   }
 });
@@ -27,8 +27,8 @@ function initializeDB() {
       date_modification DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table utilisateurs:', err);
-    else console.log('✅ Table utilisateurs créée/vérifiée');
+    if (err) console.error(' Erreur table utilisateurs:', err);
+    else console.log(' Table utilisateurs créée/vérifiée');
   });
 
   // TABLE POSTS
@@ -44,8 +44,8 @@ function initializeDB() {
       FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table posts:', err);
-    else console.log('✅ Table posts créée/vérifiée');
+    if (err) console.error(' Erreur table posts:', err);
+    else console.log(' Table posts créée/vérifiée');
   });
 
   // TABLE COMMENTAIRES
@@ -61,8 +61,8 @@ function initializeDB() {
       FOREIGN KEY (utilisateur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table commentaires:', err);
-    else console.log('✅ Table commentaires créée/vérifiée');
+    if (err) console.error(' Erreur table commentaires:', err);
+    else console.log(' Table commentaires créée/vérifiée');
   });
 
   // TABLE LIKES_POSTS
@@ -77,8 +77,8 @@ function initializeDB() {
       FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table likes_posts:', err);
-    else console.log('✅ Table likes_posts créée/vérifiée');
+    if (err) console.error(' Erreur table likes_posts:', err);
+    else console.log(' Table likes_posts créée/vérifiée');
   });
 
   // TABLE LIKES_COMMENTAIRES
@@ -93,8 +93,36 @@ function initializeDB() {
       FOREIGN KEY (commentaire_id) REFERENCES commentaires(id) ON DELETE CASCADE
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table likes_commentaires:', err);
-    else console.log('✅ Table likes_commentaires créée/vérifiée');
+    if (err) console.error(' Erreur table likes_commentaires:', err);
+    else console.log(' Table likes_commentaires créée/vérifiée');
+  });
+
+  // ==================== CRÉER LES INDEX (Performance) ====================
+  
+  // Index sur les colonnes les plus interrogées
+  db.run(`CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(utilisateur_id)`, (err) => {
+    if (err) console.error(' Erreur index posts_user_id:', err);
+    else console.log(' Index idx_posts_user_id créé');
+  });
+
+  db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_post_id ON commentaires(post_id)`, (err) => {
+    if (err) console.error(' Erreur index commentaires_post_id:', err);
+    else console.log(' Index idx_commentaires_post_id créé');
+  });
+
+  db.run(`CREATE INDEX IF NOT EXISTS idx_commentaires_user_id ON commentaires(utilisateur_id)`, (err) => {
+    if (err) console.error(' Erreur index commentaires_user_id:', err);
+    else console.log(' Index idx_commentaires_user_id créé');
+  });
+
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_posts_unique ON likes_posts(utilisateur_id, post_id)`, (err) => {
+    if (err) console.error(' Erreur index likes_posts_unique:', err);
+    else console.log(' Index idx_likes_posts_unique créé');
+  });
+
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_likes_commentaires_unique ON likes_commentaires(utilisateur_id, commentaire_id)`, (err) => {
+    if (err) console.error(' Erreur index likes_commentaires_unique:', err);
+    else console.log(' Index idx_likes_commentaires_unique créé');
   });
 }
 
@@ -109,10 +137,10 @@ function insererUtilisateur(pseudo, email, mot_de_passe, prenom, nom, bio = '') 
       [pseudo, email, mot_de_passe, prenom, nom, bio],
       function(err) {
         if (err) {
-          console.error('❌ Erreur insertion utilisateur:', err);
+          console.error(' Erreur insertion utilisateur:', err);
           reject(err);
         } else {
-          console.log('✅ Utilisateur inséré avec l\'ID:', this.lastID);
+          console.log(' Utilisateur inséré avec l\'ID:', this.lastID);
           resolve(this.lastID);
         }
       }
@@ -128,10 +156,10 @@ function insererPost(utilisateur_id, titre, contenu) {
       [utilisateur_id, titre, contenu],
       function(err) {
         if (err) {
-          console.error('❌ Erreur insertion post:', err);
+          console.error(' Erreur insertion post:', err);
           reject(err);
         } else {
-          console.log('✅ Post inséré avec l\'ID:', this.lastID);
+          console.log(' Post inséré avec l\'ID:', this.lastID);
           resolve(this.lastID);
         }
       }
@@ -147,10 +175,10 @@ function insererCommentaire(post_id, utilisateur_id, contenu) {
       [post_id, utilisateur_id, contenu],
       function(err) {
         if (err) {
-          console.error('❌ Erreur insertion commentaire:', err);
+          console.error(' Erreur insertion commentaire:', err);
           reject(err);
         } else {
-          console.log('✅ Commentaire inséré avec l\'ID:', this.lastID);
+          console.log(' Commentaire inséré avec l\'ID:', this.lastID);
           resolve(this.lastID);
         }
       }
@@ -165,10 +193,10 @@ function obtenirUtilisateurs() {
   return new Promise((resolve, reject) => {
     db.all(`SELECT * FROM utilisateurs`, (err, rows) => {
       if (err) {
-        console.error('❌ Erreur SELECT utilisateurs:', err);
+        console.error(' Erreur SELECT utilisateurs:', err);
         reject(err);
       } else {
-        console.log('✅ Utilisateurs récupérés:', rows.length);
+        console.log(' Utilisateurs récupérés:', rows.length);
         resolve(rows);
       }
     });
@@ -185,10 +213,10 @@ function obtenirPosts() {
        ORDER BY p.date_creation DESC`,
       (err, rows) => {
         if (err) {
-          console.error('❌ Erreur SELECT posts:', err);
+          console.error(' Erreur SELECT posts:', err);
           reject(err);
         } else {
-          console.log('✅ Posts récupérés:', rows.length);
+          console.log(' Posts récupérés:', rows.length);
           resolve(rows);
         }
       }
@@ -208,10 +236,10 @@ function obtenirCommentairesParPost(post_id) {
       [post_id],
       (err, rows) => {
         if (err) {
-          console.error('❌ Erreur SELECT commentaires:', err);
+          console.error(' Erreur SELECT commentaires:', err);
           reject(err);
         } else {
-          console.log('✅ Commentaires récupérés:', rows.length);
+          console.log(' Commentaires récupérés:', rows.length);
           resolve(rows);
         }
       }
@@ -227,7 +255,7 @@ function obtenirUtilisateurParPseudo(pseudo) {
       [pseudo],
       (err, row) => {
         if (err) {
-          console.error('❌ Erreur SELECT utilisateur:', err);
+          console.error(' Erreur SELECT utilisateur:', err);
           reject(err);
         } else {
           resolve(row);
@@ -248,7 +276,7 @@ function obtenirPostParId(post_id) {
       [post_id],
       (err, row) => {
         if (err) {
-          console.error('❌ Erreur SELECT post:', err);
+          console.error(' Erreur SELECT post:', err);
           reject(err);
         } else {
           resolve(row);
@@ -304,10 +332,10 @@ function obtenirPostsAvecFiltres(options = {}) {
 
     db.all(query, params, (err, rows) => {
       if (err) {
-        console.error('❌ Erreur filtrage posts:', err);
+        console.error(' Erreur filtrage posts:', err);
         reject(err);
       } else {
-        console.log('✅ Posts filtrés récupérés:', rows.length);
+        console.log(' Posts filtrés récupérés:', rows.length);
         resolve(rows);
       }
     });
@@ -345,10 +373,10 @@ function supprimerPost(post_id) {
       [post_id],
       function(err) {
         if (err) {
-          console.error('❌ Erreur DELETE post:', err);
+          console.error(' Erreur DELETE post:', err);
           reject(err);
         } else {
-          console.log('✅ Post supprimé');
+          console.log(' Post supprimé');
           resolve();
         }
       }
@@ -364,10 +392,10 @@ function supprimerCommentaire(commentaire_id) {
       [commentaire_id],
       function(err) {
         if (err) {
-          console.error('❌ Erreur DELETE commentaire:', err);
+          console.error(' Erreur DELETE commentaire:', err);
           reject(err);
         } else {
-          console.log('✅ Commentaire supprimé');
+          console.log(' Commentaire supprimé');
           resolve();
         }
       }
