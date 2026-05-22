@@ -11,6 +11,7 @@ Ce guide explique comment **utiliser** la structure de base de données complèt
 ✅ **5 index créés** pour optimiser les performances  
 ✅ **Fonctions complètes** (INSERT, SELECT, UPDATE, DELETE)  
 ✅ **Filtrage combinable** pour les requêtes avancées  
+✅ **Pas de framework** - Utilisation avec Node.js http module seulement  
 
 ---
 
@@ -68,7 +69,10 @@ const {
   obtenirUtilisateurs,
   obtenirPosts,
   obtenirCommentairesParPost,
-  obtenirPostsAvecFiltres
+  obtenirPostsAvecFiltres,
+  mettreAJourPost,
+  supprimerPost,
+  supprimerCommentaire
 } = require('./database');
 ```
 
@@ -82,6 +86,7 @@ const userId = await insererUtilisateur(
   'Dupont',                   // nom
   'Ma biographie'             // bio
 );
+console.log('Utilisateur créé avec ID:', userId);
 ```
 
 ### B. Ajouter un post :
@@ -91,6 +96,7 @@ const postId = await insererPost(
   'Mon titre',                // titre
   'Contenu du post'           // contenu
 );
+console.log('Post créé avec ID:', postId);
 ```
 
 ### C. Ajouter un commentaire :
@@ -100,23 +106,50 @@ const commentId = await insererCommentaire(
   userId,                     // utilisateur_id
   'Super post!'               // contenu
 );
+console.log('Commentaire créé avec ID:', commentId);
 ```
 
 ### D. Récupérer tous les posts :
 ```javascript
 const posts = await obtenirPosts();
+console.log(posts);
+// Résultat: [{id, titre, contenu, pseudo, nb_commentaires, nb_likes, ...}, ...]
 ```
 
 ### E. Récupérer les commentaires d'un post :
 ```javascript
 const commentaires = await obtenirCommentairesParPost(postId);
+console.log(commentaires);
+// Résultat: [{id, contenu, pseudo, date_creation, ...}, ...]
+```
+
+### F. Mettre à jour un post :
+```javascript
+await mettreAJourPost(
+  postId,                     // post_id
+  'Nouveau titre',            // titre
+  'Nouveau contenu'           // contenu
+);
+console.log('Post mis à jour');
+```
+
+### G. Supprimer un post :
+```javascript
+await supprimerPost(postId);
+console.log('Post supprimé (commentaires aussi supprimés en cascade)');
+```
+
+### H. Supprimer un commentaire :
+```javascript
+await supprimerCommentaire(commentId);
+console.log('Commentaire supprimé');
 ```
 
 ---
 
 ## 🔎 Étape 3 : Filtrage Combinable
 
-La fonction `obtenirPostsAvecFiltres()` permet de filtrer les posts :
+La fonction `obtenirPostsAvecFiltres()` permet de filtrer les posts avec des options combinables :
 
 ### Tous les posts (pagination) :
 ```javascript
@@ -150,11 +183,27 @@ const mesPostsAimes = await obtenirPostsAvecFiltres({
   user_id: 1,
   filtre_mine: true,
   filtre_likes: true,
-  limit: 10
+  limit: 10,
+  offset: 0
 });
 ```
 
-**Résultat** : Array de posts avec `nb_commentaires` et `nb_likes`
+**Structure du résultat** :
+```javascript
+[
+  {
+    id: 1,
+    titre: "Mon post",
+    contenu: "...",
+    pseudo: "alice",
+    utilisateur_id: 1,
+    nb_commentaires: 3,
+    nb_likes: 5,
+    date_creation: "2026-05-22T10:30:00"
+  },
+  // ... autres posts
+]
+```
 
 ---
 
@@ -162,69 +211,117 @@ const mesPostsAimes = await obtenirPostsAvecFiltres({
 
 5 index ont été créés pour optimiser les requêtes :
 
-| Index | Rôle | Impact |
-|-------|------|--------|
-| `idx_posts_user_id` | Trouver posts d'un user | ⚡ 10-100x plus rapide |
-| `idx_commentaires_post_id` | Trouver commentaires d'un post | ⚡ 10-100x plus rapide |
-| `idx_commentaires_user_id` | Trouver commentaires d'un user | ⚡ 10-100x plus rapide |
-| `idx_likes_posts_unique` | Empêcher doublons + perf | ⚡ Pas de duplicate |
-| `idx_likes_commentaires_unique` | Empêcher doublons + perf | ⚡ Pas de duplicate |
+| Index | Table | Colonnes | Rôle | Impact |
+|-------|-------|----------|------|--------|
+| `idx_posts_user_id` | posts | utilisateur_id | Trouver posts d'un user | ⚡ 10-100x |
+| `idx_commentaires_post_id` | commentaires | post_id | Trouver commentaires d'un post | ⚡ 10-100x |
+| `idx_commentaires_user_id` | commentaires | utilisateur_id | Trouver commentaires d'un user | ⚡ 10-100x |
+| `idx_likes_posts_unique` | likes_posts | utilisateur_id, post_id | UNIQUE - empêche doublons | ⚡ Pas de duplicate |
+| `idx_likes_commentaires_unique` | likes_commentaires | utilisateur_id, commentaire_id | UNIQUE - empêche doublons | ⚡ Pas de duplicate |
 
 **Vérifier les index :**
 ```bash
 node check-indexes.js
 ```
 
----
-
-## 🔧 Étape 5 : Créer les Routes API
-
-Pour utiliser la base de données dans Express, créez les routes :
-
-```javascript
-const express = require('express');
-const { obtenirPosts, insererPost } = require('./database');
-
-const app = express();
-app.use(express.json());
-
-// GET tous les posts
-app.get('/api/posts', async (req, res) => {
-  try {
-    const posts = await obtenirPosts();
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST créer un post
-app.post('/api/posts', async (req, res) => {
-  try {
-    const { utilisateur_id, titre, contenu } = req.body;
-    const postId = await insererPost(utilisateur_id, titre, contenu);
-    res.json({ id: postId, message: 'Post créé' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.listen(3000, () => console.log('Server sur port 3000'));
+**Résultat attendu :**
+```
+✅ 5 index créés:
+1. idx_posts_user_id
+2. idx_commentaires_post_id
+3. idx_commentaires_user_id
+4. idx_likes_posts_unique
+5. idx_likes_commentaires_unique
 ```
 
 ---
 
-## 🎨 Étape 6 : Intégrer avec l'Interface Web
+## � Étape 5 : Utiliser avec Node.js (http module)
 
-Utiliser les routes API dans votre HTML/JavaScript :
+Exemple simple pour utiliser la base de données dans votre serveur Node.js :
 
 ```javascript
-// Récupérer les posts
-async function chargerPosts() {
-  const response = await fetch('/api/posts');
-  const posts = await response.json();
+const http = require('http');
+const { obtenirPosts, insererPost } = require('./database');
+
+const server = http.createServer(async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
   
-  console.log(posts);
+  // GET /api/posts
+  if (req.url === '/api/posts' && req.method === 'GET') {
+    try {
+      const posts = await obtenirPosts();
+      res.end(JSON.stringify(posts));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  }
+  // POST /api/posts
+  else if (req.url === '/api/posts' && req.method === 'POST') {
+    let data = '';
+    req.on('data', chunk => data += chunk);
+    req.on('end', async () => {
+      try {
+        const { utilisateur_id, titre, contenu } = JSON.parse(data);
+        const postId = await insererPost(utilisateur_id, titre, contenu);
+        res.end(JSON.stringify({ id: postId, message: 'Post créé' }));
+      } catch (err) {
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  }
+  else {
+    res.writeHead(404);
+    res.end(JSON.stringify({ error: 'Route non trouvée' }));
+  }
+});
+
+server.listen(3000, () => console.log('🚀 Serveur sur port 3000'));
+```
+
+---
+
+## 📚 Ressources
+
+| Ressource | Lien |
+|-----------|------|
+| **Node.js http** | https://nodejs.org/api/http.html |
+| **SQLite3 npm** | https://www.npmjs.com/package/sqlite3 |
+| **SQL Basics** | https://www.w3schools.com/sql/ |
+| **Schema Documentation** | Voir `schema.md` |
+
+---
+
+## ✅ Checklist - Ce qui a été créé
+
+### Base de Données
+- ✅ 5 tables créées (utilisateurs, posts, commentaires, likes_posts, likes_commentaires)
+- ✅ 5 index créés pour optimiser les performances
+- ✅ Relations et intégrité référentielle en place
+- ✅ CASCADE DELETE configuré
+
+### Fonctions Database
+- ✅ INSERT (utilisateurs, posts, commentaires)
+- ✅ SELECT (simple et avancé)
+- ✅ UPDATE (posts)
+- ✅ DELETE (posts, commentaires)
+- ✅ Filtrage combinable (mes posts, posts aimés, pagination)
+
+### Scripts Utilitaires
+- ✅ `init-db.js` - Initialise la BDD
+- ✅ `check-db.js` - Vérifie les tables
+- ✅ `check-indexes.js` - Vérifie les index
+- ✅ `exemples-database.js` - Exemples d'utilisation
+
+### Documentation
+- ✅ `schema.md` - Schéma complet (ER diagram)
+- ✅ `FORUMR.md` - Ce guide
+
+---
+
+**Bon développement! 🚀 Bonne chance avec votre projet forum!**
   // Afficher les posts dans le DOM
 }
 
