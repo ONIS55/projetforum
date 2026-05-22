@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forum - Blog</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    main {
+      padding: 30px;
+    }
+
+    .form-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border-left: 4px solid #667eea;
+    }
+
+    .form-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 1em;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .posts-section h2 {
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+
+    .post {
+      background: #f8f9fa;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .post:hover {
+      transform: translateX(5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .post h3 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .post-meta {
+      color: #888;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+
+    .post-content {
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .close:hover {
+      color: #000;
+    }
+
+    .commentaires {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+    }
+
+    .commentaire {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 3px solid #764ba2;
+      border-radius: 5px;
+    }
+
+    .commentaire-meta {
+      color: #888;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #888;
+      padding: 40px;
+      font-style: italic;
+    }
+
+    .loading {
+      text-align: center;
+      color: #888;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>💬 Forum & Blog</h1>
+      <p>Partagez vos idées et découvrez les posts de la communauté</p>
+    </header>
+
+    <main>
+      <!-- Formulaire pour créer un post -->
+      <div class="form-section">
+        <h2>Créer un nouveau post</h2>
+        <form id="postForm">
+          <div class="form-group">
+            <label for="auteur">Votre nom</label>
+            <input type="text" id="auteur" name="auteur" required>
+          </div>
+          <div class="form-group">
+            <label for="prenom">Prénom</label>
+            <input type="text" id="prenom" name="prenom" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="pseudo">Pseudo</label>
+            <input type="text" id="pseudo" name="pseudo" required>
+          </div>
+          <div class="form-group">
+            <label for="titre">Titre du post</label>
+            <input type="text" id="titre" name="titre" required>
+          </div>
+          <div class="form-group">
+            <label for="contenu">Contenu</label>
+            <textarea id="contenu" name="contenu" required></textarea>
+          </div>
+          <button type="submit">Publier le post</button>
+        </form>
+      </div>
+
+      <!-- Liste des posts -->
+      <div class="posts-section">
+        <h2>Tous les posts</h2>
+        <div id="postsList"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal pour afficher le détail d'un post -->
+  <div id="postModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="postDetail"></div>
+      <div class="form-section" style="margin-top: 30px;">
+        <h3>Ajouter un commentaire</h3>
+        <form id="commentForm">
+          <div class="form-group">
+            <label for="commentAuteur">Votre nom</label>
+            <input type="text" id="commentAuteur" name="auteur" required>
+          </div>
+          <div class="form-group">
+            <label for="commentContenu">Votre commentaire</label>
+            <textarea id="commentContenu" name="contenu" required></textarea>
+          </div>
+          <button type="submit">Publier le commentaire</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('postModal');
+    const closeBtn = document.querySelector('.close');
+    let currentPostId = null;
+
+    // Charger les posts au démarrage
+    loadPosts();
+
+    // Événement pour fermer le modal
+    closeBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    // Soumettre un nouveau post
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const auteur = document.getElementById('auteur').value;
+      const prenom = document.getElementById('prenom').value;
+      const email = document.getElementById('email').value;
+      const pseudo = document.getElementById('pseudo').value;
+      const titre = document.getElementById('titre').value;
+      const contenu = document.getElementById('contenu').value;
+
+      try {
+        const response = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titre, contenu, auteur, prenom, email, pseudo })
+        });
+
+        if (response.ok) {
+          alert('Post publié avec succès!');
+          document.getElementById('postForm').reset();
+          loadPosts();
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la publication du post');
+      }
+    });
+
+    // Charger tous les posts
+    async function loadPosts() {
+      const postsList = document.getElementById('postsList');
+      postsList.innerHTML = '<div class="loading">Chargement...</div>';
+
+      try {
+        const response = await fetch('/api/posts');
+        const posts = await response.json();
+
+        if (posts.length === 0) {
+          postsList.innerHTML = '<div class="empty-state">Aucun post pour le moment. Soyez le premier à publier!</div>';
+          return;
+        }
+
+        postsList.innerHTML = posts.map(post => `
+          <div class="post" onclick="loadPostDetail(${post.id})">
+            <h3>${escapeHtml(post.titre)}</h3>
+            <div class="post-meta">Par <strong>${escapeHtml(post.pseudo)}</strong> (${escapeHtml(post.prenom)}) • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+            <div class="post-content">${escapeHtml(post.contenu.substring(0, 150))}...</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Erreur:', error);
+        postsList.innerHTML = '<div class="empty-state">Erreur lors du chargement des posts</div>';
+      }
+    }
+
+    // Charger les détails d'un post
+    async function loadPostDetail(postId) {
+      currentPostId = postId;
+      const postDetail = document.getElementById('postDetail');
+      postDetail.innerHTML = '<div class="loading">Chargement...</div>';
+
+      try {
+        const response = await fetch(`/api/posts/${postId}`);
+        const post = await response.json();
+
+        postDetail.innerHTML = `
+          <h2>${escapeHtml(post.titre)}</h2>
+          <div class="post-meta">
+            Par <strong>${escapeHtml(post.pseudo)}</strong><br>
+            Prénom: ${escapeHtml(post.prenom)}<br>
+            Email: ${escapeHtml(post.email)}<br>
+            ${new Date(post.date_creation).toLocaleDateString('fr-FR')}
+          </div>
+          <div style="margin-top: 20px; line-height: 1.6;">${escapeHtml(post.contenu)}</div>
+          
+          ${post.commentaires && post.commentaires.length > 0 ? `
+            <div class="commentaires">
+              <h3>Commentaires (${post.commentaires.length})</h3>
+              ${post.commentaires.map(comm => `
+                <div class="commentaire">
+                  <div class="commentaire-meta">
+                    <strong>${escapeHtml(comm.auteur)}</strong> • ${new Date(comm.date_creation).toLocaleDateString('fr-FR')}
+                  </div>
+                  <div>${escapeHtml(comm.contenu)}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div class="commentaires"><p><em>Aucun commentaire pour le moment</em></p></div>'}
+        `;
+
+        modal.style.display = 'block';
+      } catch (error) {
+        console.error('Erreur:', error);
+        postDetail.innerHTML = '<div class="empty-state">Erreur lors du chargement du post</div>';
+      }
+    }
+
+    // Soumettre un commentaire
+    document.getElementById('commentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const auteur = document.getElementById('commentAuteur').value;
+      const contenu = document.getElementById('commentContenu').value;
+
+      try {
+        const response = await fetch(`/api/posts/${currentPostId}/commentaires`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auteur, contenu })
+        });
+
+        if (response.ok) {
+          alert('Commentaire publié!');
+          document.getElementById('commentForm').reset();
+          loadPostDetail(currentPostId);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la publication du commentaire');
+      }
+    });
+
+    // Fonction pour échapper les caractères HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+  </script>
+</body>
+</html>

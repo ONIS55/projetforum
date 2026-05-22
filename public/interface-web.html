@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forum - Blog</title>
+  <link rel="stylesheet" href="animations.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>💬 Forum & Blog</h1>
+      <p>Partagez vos idées et découvrez les posts de la communauté</p>
+    </header>
+
+    <main>
+      <!-- Formulaire pour créer un post -->
+      <div class="form-section">
+        <h2>Créer un nouveau post</h2>
+        <form id="postForm">
+          <div class="form-group">
+            <label for="auteur">Votre nom</label>
+            <input type="text" id="auteur" name="auteur" required>
+          </div>
+          <div class="form-group">
+            <label for="titre">Titre du post</label>
+            <input type="text" id="titre" name="titre" required>
+          </div>
+          <div class="form-group">
+            <label for="contenu">Contenu</label>
+            <textarea id="contenu" name="contenu" required></textarea>
+          </div>
+          <button type="submit">Publier le post</button>
+        </form>
+      </div>
+
+      <!-- Liste des posts -->
+      <div class="posts-section">
+        <h2>Tous les posts</h2>
+        <div id="postsList"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal pour afficher le détail d'un post -->
+  <div id="postModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="postDetail"></div>
+      <div class="form-section" style="margin-top: 30px;">
+        <h3>Ajouter un commentaire</h3>
+        <form id="commentForm">
+          <div class="form-group">
+            <label for="commentAuteur">Votre nom</label>
+            <input type="text" id="commentAuteur" name="auteur" required>
+          </div>
+          <div class="form-group">
+            <label for="commentContenu">Votre commentaire</label>
+            <textarea id="commentContenu" name="contenu" required></textarea>
+          </div>
+          <button type="submit">Publier le commentaire</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('postModal');
+    const closeBtn = document.querySelector('.close');
+    let currentPostId = null;
+
+    // Charger les posts au démarrage
+    loadPosts();
+
+    // Événement pour fermer le modal
+    closeBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    // Soumettre un nouveau post
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const auteur = document.getElementById('auteur').value;
+      const titre = document.getElementById('titre').value;
+      const contenu = document.getElementById('contenu').value;
+
+      try {
+        const response = await fetch('/api/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titre, contenu, auteur })
+        });
+
+        if (response.ok) {
+          alert('Post publié avec succès!');
+          document.getElementById('postForm').reset();
+          loadPosts();
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la publication du post');
+      }
+    });
+
+    // Charger tous les posts
+    async function loadPosts() {
+      const postsList = document.getElementById('postsList');
+      postsList.innerHTML = '<div class="loading">Chargement...</div>';
+
+      try {
+        const response = await fetch('/api/posts');
+        const posts = await response.json();
+
+        if (posts.length === 0) {
+          postsList.innerHTML = '<div class="empty-state">Aucun post pour le moment. Soyez le premier à publier!</div>';
+          return;
+        }
+
+        postsList.innerHTML = posts.map(post => `
+          <div class="post" onclick="loadPostDetail(${post.id})">
+            <h3>${escapeHtml(post.titre)}</h3>
+            <div class="post-meta">Par <strong>${escapeHtml(post.auteur)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+            <div class="post-content">${escapeHtml(post.contenu.substring(0, 150))}...</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Erreur:', error);
+        postsList.innerHTML = '<div class="empty-state">Erreur lors du chargement des posts</div>';
+      }
+    }
+
+    // Charger les détails d'un post
+    async function loadPostDetail(postId) {
+      currentPostId = postId;
+      const postDetail = document.getElementById('postDetail');
+      postDetail.innerHTML = '<div class="loading">Chargement...</div>';
+
+      try {
+        const response = await fetch(`/api/posts/${postId}`);
+        const post = await response.json();
+
+        postDetail.innerHTML = `
+          <h2>${escapeHtml(post.titre)}</h2>
+          <div class="post-meta">Par <strong>${escapeHtml(post.auteur)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+          <div style="margin-top: 20px; line-height: 1.6;">${escapeHtml(post.contenu)}</div>
+          
+          ${post.commentaires && post.commentaires.length > 0 ? `
+            <div class="commentaires">
+              <h3>Commentaires (${post.commentaires.length})</h3>
+              ${post.commentaires.map(comm => `
+                <div class="commentaire">
+                  <div class="commentaire-meta">
+                    <strong>${escapeHtml(comm.auteur)}</strong> • ${new Date(comm.date_creation).toLocaleDateString('fr-FR')}
+                  </div>
+                  <div>${escapeHtml(comm.contenu)}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : '<div class="commentaires"><p><em>Aucun commentaire pour le moment</em></p></div>'}
+        `;
+
+        modal.style.display = 'block';
+      } catch (error) {
+        console.error('Erreur:', error);
+        postDetail.innerHTML = '<div class="empty-state">Erreur lors du chargement du post</div>';
+      }
+    }
+
+    // Soumettre un commentaire
+    document.getElementById('commentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const auteur = document.getElementById('commentAuteur').value;
+      const contenu = document.getElementById('commentContenu').value;
+
+      try {
+        const response = await fetch(`/api/posts/${currentPostId}/commentaires`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auteur, contenu })
+        });
+
+        if (response.ok) {
+          alert('Commentaire publié!');
+          document.getElementById('commentForm').reset();
+          loadPostDetail(currentPostId);
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la publication du commentaire');
+      }
+    });
+
+    // Fonction pour échapper les caractères HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, m => map[m]);
+    }
+  </script>
+</body>
+</html>

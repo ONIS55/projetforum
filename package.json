@@ -1,0 +1,16 @@
+{
+  "name": "forum-blog",
+  "version": "1.0.0",
+  "description": "Un forum/blog simple avec SQLite (sans framework)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["forum", "blog"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "sqlite3": "^5.1.6"
+  }
+}
