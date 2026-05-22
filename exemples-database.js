@@ -11,6 +11,7 @@ const {
   obtenirCommentairesParPost,
   obtenirUtilisateurParPseudo,
   obtenirPostParId,
+  obtenirPostsAvecFiltres,
   mettreAJourPost,
   supprimerPost,
   supprimerCommentaire
@@ -119,6 +120,58 @@ async function exemplesDelete() {
   }
 }
 
+// ==================== FILTRAGE COMBINABLE ====================
+
+async function exempleFiltrageCombinables() {
+  console.log('\n🔎 === FILTRAGE COMBINABLE ===\n');
+  
+  try {
+    const user_id = 1; // ID de l'utilisateur connecté
+    
+    // 1. Tous les posts (pagination)
+    console.log('📋 Tous les posts (page 1, 10 par page):');
+    const tousLesPosts = await obtenirPostsAvecFiltres({
+      limit: 10,
+      offset: 0
+    });
+    console.table(tousLesPosts);
+    
+    // 2. Seulement mes posts
+    console.log('\n📋 Mes posts:');
+    const mesPosts = await obtenirPostsAvecFiltres({
+      user_id: user_id,
+      filtre_mine: true,
+      limit: 10,
+      offset: 0
+    });
+    console.table(mesPosts);
+    
+    // 3. Seulement les posts que j'ai aimés
+    console.log('\n📋 Posts que j\'ai aimés:');
+    const postsAimes = await obtenirPostsAvecFiltres({
+      user_id: user_id,
+      filtre_likes: true,
+      limit: 10,
+      offset: 0
+    });
+    console.table(postsAimes);
+    
+    // 4. Combinaison : Mes posts que j'ai aimés
+    console.log('\n📋 Mes posts que j\'ai aussi aimés:');
+    const mesPostsAimes = await obtenirPostsAvecFiltres({
+      user_id: user_id,
+      filtre_mine: true,
+      filtre_likes: true,
+      limit: 10,
+      offset: 0
+    });
+    console.table(mesPostsAimes);
+    
+  } catch (err) {
+    console.error('❌ Erreur lors du filtrage:', err);
+  }
+}
+
 // ==================== REQUÊTES SQL AVANCÉES ====================
 
 async function requetesSQLAvancees() {
@@ -179,6 +232,7 @@ async function requetesSQLAvancees() {
 // exemplesInsert().then(() => exemplesSelect());
 // exemplesUpdate();
 // exemplesDelete();
+// exempleFiltrageCombinables();
 // requetesSQLAvancees();
 
 module.exports = {
@@ -186,5 +240,6 @@ module.exports = {
   exemplesSelect,
   exemplesUpdate,
   exemplesDelete,
+  exempleFiltrageCombinables,
   requetesSQLAvancees
 };

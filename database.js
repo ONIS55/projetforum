@@ -258,6 +258,62 @@ function obtenirPostParId(post_id) {
   });
 }
 
+// Filtrage combinable (mes posts, posts aimés, pagination)
+function obtenirPostsAvecFiltres(options = {}) {
+  const {
+    user_id = null,
+    filtre_mine = false,        // true = afficher seulement mes posts
+    filtre_likes = false,       // true = afficher seulement les posts que j'ai aimés
+    limit = 10,
+    offset = 0
+  } = options;
+
+  return new Promise((resolve, reject) => {
+    let query = `
+      SELECT p.*,
+             u.pseudo as auteur,
+             COUNT(DISTINCT c.id) as nb_commentaires,
+             COUNT(DISTINCT lp.id) as nb_likes
+      FROM posts p
+      LEFT JOIN utilisateurs u ON p.utilisateur_id = u.id
+      LEFT JOIN commentaires c ON p.id = c.post_id
+      LEFT JOIN likes_posts lp ON p.id = lp.post_id
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    // Filtre "Mes posts"
+    if (filtre_mine && user_id) {
+      query += ` AND p.utilisateur_id = ?`;
+      params.push(user_id);
+    }
+
+    // Filtre "Posts aimés"
+    if (filtre_likes && user_id) {
+      query += ` AND EXISTS (
+        SELECT 1 FROM likes_posts l 
+        WHERE l.post_id = p.id AND l.utilisateur_id = ?
+      )`;
+      params.push(user_id);
+    }
+
+    // Grouper et trier
+    query += ` GROUP BY p.id ORDER BY p.date_creation DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        console.error('❌ Erreur filtrage posts:', err);
+        reject(err);
+      } else {
+        console.log('✅ Posts filtrés récupérés:', rows.length);
+        resolve(rows);
+      }
+    });
+  });
+}
+
 // ==================== FONCTIONS UPDATE ====================
 
 // Mettre à jour un post
@@ -334,6 +390,7 @@ module.exports = {
   obtenirCommentairesParPost,
   obtenirUtilisateurParPseudo,
   obtenirPostParId,
+  obtenirPostsAvecFiltres,
   
   // UPDATE
   mettreAJourPost,
