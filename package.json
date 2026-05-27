@@ -7,10 +7,15 @@
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["forum", "blog"],
+  "keywords": [
+    "forum",
+    "blog"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "busboy": "^1.6.0",
+    "file-type": "^22.0.1",
     "sqlite3": "^5.1.6"
   }
 }

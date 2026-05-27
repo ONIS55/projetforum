@@ -41,8 +41,8 @@ function initializeDB() {
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `, (err) => {
-    if (err) console.error('❌ Erreur table categories:', err);
-    else console.log('✅ Table categories créée/vérifiée');
+    if (err) console.error(' Erreur table categories:', err);
+    else console.log(' Table categories créée/vérifiée');
   });
 
   // TABLE POSTS
@@ -53,6 +53,7 @@ function initializeDB() {
       categorie_id INTEGER,
       titre TEXT NOT NULL,
       contenu TEXT NOT NULL,
+      image_path TEXT,
       nb_vues INTEGER DEFAULT 0,
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
       date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -170,11 +171,11 @@ function insererUtilisateur(pseudo, email, mot_de_passe, prenom, nom, bio = '') 
 }
 
 // Insérer un nouveau post
-function insererPost(utilisateur_id, titre, contenu) {
+function insererPost(utilisateur_id, titre, contenu, categorie_id = null, image_path = null) {
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO posts (utilisateur_id, titre, contenu) VALUES (?, ?, ?)`,
-      [utilisateur_id, titre, contenu],
+      `INSERT INTO posts (utilisateur_id, titre, contenu, categorie_id, image_path) VALUES (?, ?, ?, ?, ?)`,
+      [utilisateur_id, titre, contenu, categorie_id, image_path],
       function(err) {
         if (err) {
           console.error(' Erreur insertion post:', err);

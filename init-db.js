@@ -57,6 +57,7 @@ function initializeDB() {
       titre TEXT NOT NULL,
       contenu TEXT NOT NULL,
       categorie_id INTEGER,
+      image_path TEXT,
       nb_vues INTEGER DEFAULT 0,
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
       date_modification DATETIME DEFAULT CURRENT_TIMESTAMP,
