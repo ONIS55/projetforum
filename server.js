@@ -1,9 +1,6 @@
 const http = require('http');
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
-const querystring = require('querystring');
+const router = require('./routes/router.js');
 
 const PORT = 3000;
 
@@ -56,10 +53,10 @@ function parseBody(req, callback) {
   });
   req.on('end', () => {
     try {
-      if (req.headers['content-type'].includes('application/json')) {
+      if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
         callback(JSON.parse(body));
       } else {
-        callback(querystring.parse(body));
+        callback(require('querystring').parse(body));
       }
     } catch (e) {
       callback({});
@@ -84,13 +81,9 @@ function queryDB(sql, params, single, callback) {
 
 // Serveur HTTP
 const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
-  const query = parsedUrl.query;
-
   // Headers CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -99,103 +92,34 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Route: GET /
-  if (pathname === '/' && req.method === 'GET') {
-    fs.readFile(path.join(__dirname, 'page.html'), (err, data) => {
-      if (err) {
-        res.writeHead(500);
-        res.end('Erreur: Fichier non trouvé');
-        return;
-      }
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(data);
-    });
-    return;
-  }
-
-  // Route: GET /api/posts
-  if (pathname === '/api/posts' && req.method === 'GET') {
-    queryDB('SELECT * FROM posts ORDER BY date_creation DESC', [], false, (err, rows) => {
-      respond(res, err ? 500 : 200, err ? { error: err.message } : (rows || []));
-    });
-    return;
-  }
-
-  // Route: GET /api/posts/:id
-  if (pathname.startsWith('/api/posts/') && req.method === 'GET') {
-    const id = pathname.split('/')[3];
-    
-    queryDB('SELECT * FROM posts WHERE id = ?', [id], true, (err, post) => {
-      if (err || !post) {
-        respond(res, 404, { error: 'Post non trouvé' });
-        return;
-      }
-      
-      queryDB('SELECT * FROM commentaires WHERE post_id = ? ORDER BY date_creation DESC', [id], false, (err, commentaires) => {
-        respond(res, 200, { ...post, commentaires: commentaires || [] });
-      });
-    });
-    return;
-  }
-
-  // Route: POST /api/posts
-  if (pathname === '/api/posts' && req.method === 'POST') {
-    parseBody(req, (data) => {
-      const { titre, contenu, auteur, prenom, email, pseudo } = data;
-      
-      if (!titre || !contenu || !auteur || !prenom || !email || !pseudo) {
-        respond(res, 400, { error: 'Tous les champs sont requis' });
-        return;
-      }
-
-      db.run(
-        'INSERT INTO posts (titre, contenu, auteur, prenom, email, pseudo) VALUES (?, ?, ?, ?, ?, ?)',
-        [titre, contenu, auteur, prenom, email, pseudo],
-        function(err) {
-          respond(res, err ? 500 : 201, err ? { error: err.message } : { id: this.lastID, titre, contenu, auteur, prenom, email, pseudo });
-        }
-      );
-    });
-    return;
-  }
-
-  // Route: POST /api/posts/:id/commentaires
-  if (pathname.includes('/api/posts/') && pathname.includes('/commentaires') && req.method === 'POST') {
-    const id = pathname.split('/')[3];
-    
-    parseBody(req, (data) => {
-      const { auteur, contenu } = data;
-      
-      if (!auteur || !contenu) {
-        respond(res, 400, { error: 'Auteur et contenu requis' });
-        return;
-      }
-
-      db.run(
-        'INSERT INTO commentaires (post_id, auteur, contenu) VALUES (?, ?, ?)',
-        [id, auteur, contenu],
-        function(err) {
-          respond(res, err ? 500 : 201, err ? { error: err.message } : { id: this.lastID, post_id: id, auteur, contenu });
-        }
-      );
-    });
-    return;
-  }
-
-  // Route non trouvée
-  respond(res, 404, { error: 'Route non trouvée' });
+  // Déléguer toutes les routes au routeur
+  router(req, res);
 });
 
 // Démarrer le serveur
 server.listen(PORT, () => {
-  console.log(`🚀 Serveur du forum lancé sur http://localhost:${PORT}`);
+  console.log(`
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║    🚀 FORUM DÉMARRÉ                                        ║
+║    📱 http://localhost:${PORT}                                  ║
+║    🗄️  Base de données: Base.db                           ║
+║    📂 Routes: routes/router.js                            ║
+║    📄 Interface: public/interface-web.html                 ║
+║    🖼️  Images: /uploads                                    ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+  `);
 });
 
 // Fermer la base de données en sortant
 process.on('SIGINT', () => {
+  console.log('\n❌ Arrêt du serveur...');
   db.close((err) => {
-    if (err) console.error(err);
-    console.log('Base de données fermée');
+    if (err) console.error('Erreur fermeture BDD:', err);
+    console.log('✅ Base de données fermée');
     process.exit(0);
   });
 });
+
+module.exports = server;
