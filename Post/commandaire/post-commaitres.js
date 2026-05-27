@@ -18,6 +18,7 @@
 
 const url = require('url');
 const { parsePostWithImage } = require('./post-upload');
+const { obtenirPostsAvecFiltres } = require('./Authentification/filtres-port');
 
 /**
  * Helper pour répondre au client
@@ -65,19 +66,32 @@ function handleApiRoutes(req, res) {
   const pathname = parsedUrl.pathname;
 
   // ============================================================
-  // GET /api/posts - Récupère tous les posts
+  // GET /api/posts - Récupère tous les posts avec filtres optionnels
+  // Query params: ?filtre_mine=true&filtre_likes=true&categorie_id=2
   // ============================================================
   if (pathname === '/api/posts' && req.method === 'GET') {
-    global.db.all(
-      `SELECT posts.*, utilisateurs.pseudo 
-       FROM posts 
-       JOIN utilisateurs ON posts.utilisateur_id = utilisateurs.id 
-       ORDER BY posts.date_creation DESC`,
-      [],
-      (err, rows) => {
-        respond(res, err ? 500 : 200, err ? { error: err.message } : (rows || []));
-      }
-    );
+    const query = parsedUrl.query;
+    const user_id = query.user_id ? parseInt(query.user_id) : null;
+    const filtre_mine = query.filtre_mine === 'true';
+    const filtre_likes = query.filtre_likes === 'true';
+    const categorie_id = query.categorie_id ? parseInt(query.categorie_id) : null;
+    const limit = query.limit ? parseInt(query.limit) : 10;
+    const offset = query.offset ? parseInt(query.offset) : 0;
+
+    obtenirPostsAvecFiltres({
+      user_id,
+      filtre_mine,
+      filtre_likes,
+      categorie_id,
+      limit,
+      offset
+    })
+      .then(rows => {
+        respond(res, 200, rows || []);
+      })
+      .catch(err => {
+        respond(res, 500, { error: err.message });
+      });
     return true;
   }
 

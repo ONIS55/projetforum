@@ -1,5 +1,5 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./Base.db');
+// Utilise global.db fourni par server.js
+// Ne pas créer une nouvelle connexion ici
 
 function creerTableCategories() {
   return new Promise((resolve, reject) => {
@@ -156,7 +156,7 @@ function obtenirPostsAvecFiltres(options = {}) {
   return new Promise((resolve, reject) => {
     let query = `
       SELECT p.*,
-             u.pseudo as auteur,
+             u.pseudo,
              c.nom as categorie_nom,
              COUNT(DISTINCT co.id) as nb_commentaires,
              COUNT(DISTINCT lp.id) as nb_likes
@@ -195,7 +195,12 @@ function obtenirPostsAvecFiltres(options = {}) {
     query += ` GROUP BY p.id ORDER BY p.date_creation DESC LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
-    db.all(query, params, (err, rows) => {
+    // Utilise global.db fourni par server.js
+    if (!global.db) {
+      return reject(new Error('Database not initialized'));
+    }
+
+    global.db.all(query, params, (err, rows) => {
       if (err) {
         console.error('Erreur filtrage posts:', err);
         reject(err);
