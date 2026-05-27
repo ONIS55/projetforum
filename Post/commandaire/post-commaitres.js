@@ -1,5 +1,7 @@
 // Routes pour POST et COMMENTAIRE
 
+const { parsePostWithImage } = require('./post-upload');
+
 // Route: GET /api/posts
 if (pathname === '/api/posts' && req.method === 'GET') {
   queryDB('SELECT * FROM posts ORDER BY date_creation DESC', [], false, (err, rows) => {
@@ -25,24 +27,34 @@ if (pathname.startsWith('/api/posts/') && req.method === 'GET') {
   return;
 }
 
-// Route: POST /api/posts
+// Route: POST /api/posts (avec upload d'image)
 if (pathname === '/api/posts' && req.method === 'POST') {
-  parseBody(req, (data) => {
-    const { titre, contenu, auteur, prenom, email, pseudo } = data;
-    
-    if (!titre || !contenu || !auteur || !prenom || !email || !pseudo) {
-      respond(res, 400, { error: 'Tous les champs sont requis' });
-      return;
-    }
-
-    db.run(
-      'INSERT INTO posts (titre, contenu, auteur, prenom, email, pseudo) VALUES (?, ?, ?, ?, ?, ?)',
-      [titre, contenu, auteur, prenom, email, pseudo],
-      function(err) {
-        respond(res, err ? 500 : 201, err ? { error: err.message } : { id: this.lastID, titre, contenu, auteur, prenom, email, pseudo });
+  parsePostWithImage(req)
+    .then(data => {
+      const { titre, contenu, utilisateur_id, categorie_id, image_path } = data;
+      
+      if (!titre || !contenu || !utilisateur_id) {
+        respond(res, 400, { error: 'Titre, contenu et utilisateur_id requis' });
+        return;
       }
-    );
-  });
+
+      db.run(
+        'INSERT INTO posts (utilisateur_id, titre, contenu, categorie_id, image_path) VALUES (?, ?, ?, ?, ?)',
+        [utilisateur_id, titre, contenu, categorie_id || null, image_path || null],
+        function(err) {
+          respond(res, err ? 500 : 201, err ? { error: err.message } : { 
+            id: this.lastID, 
+            titre, 
+            contenu, 
+            image_path,
+            categorie_id 
+          });
+        }
+      );
+    })
+    .catch(err => {
+      respond(res, 400, { error: err.message });
+    });
   return;
 }
 
@@ -51,18 +63,23 @@ if (pathname.includes('/api/posts/') && pathname.includes('/commentaires') && re
   const id = pathname.split('/')[3];
   
   parseBody(req, (data) => {
-    const { auteur, contenu } = data;
+    const { utilisateur_id, contenu } = data;
     
-    if (!auteur || !contenu) {
-      respond(res, 400, { error: 'Auteur et contenu requis' });
+    if (!utilisateur_id || !contenu) {
+      respond(res, 400, { error: 'Utilisateur ID et contenu requis' });
       return;
     }
 
     db.run(
-      'INSERT INTO commentaires (post_id, auteur, contenu) VALUES (?, ?, ?)',
-      [id, auteur, contenu],
+      'INSERT INTO commentaires (post_id, utilisateur_id, contenu) VALUES (?, ?, ?)',
+      [id, utilisateur_id, contenu],
       function(err) {
-        respond(res, err ? 500 : 201, err ? { error: err.message } : { id: this.lastID, post_id: id, auteur, contenu });
+        respond(res, err ? 500 : 201, err ? { error: err.message } : { 
+          id: this.lastID, 
+          post_id: id, 
+          utilisateur_id, 
+          contenu 
+        });
       }
     );
   });
