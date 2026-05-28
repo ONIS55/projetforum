@@ -36,16 +36,3 @@ server.listen(PORT, () => {
 ╚════════════════════════════════════════════════════════════╝
   `);
 });
-});
-
-// Fermer la base de données en sortant
-process.on('SIGINT', () => {
-  console.log('\n❌ Arrêt du serveur...');
-  db.close((err) => {
-    if (err) console.error('Erreur fermeture BDD:', err);
-    console.log('✅ Base de données fermée');
-    process.exit(0);
-  });
-});
-
-module.exports = server;

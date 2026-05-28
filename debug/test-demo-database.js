@@ -15,7 +15,7 @@ const {
   mettreAJourPost,
   supprimerPost,
   supprimerCommentaire
-} = require('./database');
+} = require('../database');
 
 // ==================== EXEMPLES INSERT ====================
 
@@ -177,7 +177,7 @@ async function exempleFiltrageCombinables() {
 async function requetesSQLAvancees() {
   console.log('\n🚀 === REQUÊTES SQL AVANCÉES ===\n');
   
-  const { db } = require('./database');
+  const { db } = require('../database');
   
   // 1. Récupérer les posts avec le nombre de commentaires
   db.all(

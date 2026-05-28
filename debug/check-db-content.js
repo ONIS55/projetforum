@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./Base.db');
+const db = new sqlite3.Database('../Base.db');
 
 console.log('📊 CONTENU DE Base.db:\n');
 

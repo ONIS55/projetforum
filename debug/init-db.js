@@ -5,7 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 // 1. Créer la nouvelle base de données
 console.log('🔄 Création de la nouvelle Base.db...\n');
 
-const db = new sqlite3.Database('./Base.db', (err) => {
+const db = new sqlite3.Database('../Base.db', (err) => {
   if (err) {
     console.error('❌ Erreur connexion:', err);
     process.exit(1);
@@ -54,9 +54,9 @@ function initializeDB() {
     CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       utilisateur_id INTEGER NOT NULL,
+      categorie_id INTEGER,
       titre TEXT NOT NULL,
       contenu TEXT NOT NULL,
-      categorie_id INTEGER,
       image_path TEXT,
       nb_vues INTEGER DEFAULT 0,
       date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
