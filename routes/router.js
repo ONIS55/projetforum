@@ -18,7 +18,7 @@ const url = require('url');
 const querystring = require('querystring');
 
 // Importer les modules des routes API
-const { handleApiRoutes } = require('../Post/commandaire/post-commaitres.js');
+const { handleApiRoutes } = require('../Post/commandaire/post-commentaires.js');
 
 /**
  * Parser le body JSON/urlencoded

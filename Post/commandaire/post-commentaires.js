@@ -15,8 +15,70 @@
  * @requires post-upload.js (parsePostWithImage, handleImageUpload)
  */
 
+const url = require('url');
+const querystring = require('querystring');
 const { parsePostWithImage } = require('./post-upload');
-const { db, insererPost, obtenirPostsAvecFiltres, obtenirCommentairesParPost, insererCommentaire } = require('../../database.js');
+const { db } = require('../../database.js');
+
+/**
+ * Helper: Parser le body JSON/urlencoded
+ * @param {Object} req - Requête HTTP
+ * @param {Function} callback - Callback(data)
+ */
+function parseBody(req, callback) {
+  let body = '';
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
+  req.on('end', () => {
+    try {
+      if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+        callback(JSON.parse(body));
+      } else {
+        callback(querystring.parse(body));
+      }
+    } catch (e) {
+      callback({});
+    }
+  });
+}
+
+/**
+ * Helper: Répondre au client avec JSON
+ * @param {Object} res - Réponse HTTP
+ * @param {number} statusCode - Code HTTP
+ * @param {Object} data - Données JSON
+ */
+function respond(res, statusCode, data) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(data));
+}
+
+/**
+ * Helper: Exécuter une requête SQL
+ * @param {string} sql - Requête SQL
+ * @param {Array} params - Paramètres bindés
+ * @param {boolean} single - true = une seule ligne, false = toutes les lignes
+ * @param {Function} callback - Callback(err, result)
+ */
+function queryDB(sql, params, single, callback) {
+  if (single) {
+    db.get(sql, params, callback);
+  } else {
+    db.all(sql, params, callback);
+  }
+}
+
+/**
+ * Gestionnaire principal des routes API
+ * @param {Object} req - Requête HTTP
+ * @param {Object} res - Réponse HTTP
+ * @returns {boolean} true si la requête a été traitée, false sinon
+ */
+function handleApiRoutes(req, res) {
+  const parsedUrl = url.parse(req.url, true);
+  const pathname = parsedUrl.pathname;
+  const query = parsedUrl.query;
 
 /**
  * GET /api/posts
@@ -72,7 +134,7 @@ if (pathname === '/api/posts' && req.method === 'GET') {
   queryDB('SELECT posts.*, utilisateurs.pseudo FROM posts JOIN utilisateurs ON posts.utilisateur_id = utilisateurs.id ORDER BY posts.date_creation DESC', [], false, (err, rows) => {
     respond(res, err ? 500 : 200, err ? { error: err.message } : (rows || []));
   });
-  return;
+  return true;
 }
 
 /**
@@ -154,7 +216,7 @@ if (pathname.startsWith('/api/posts/') && req.method === 'GET') {
       respond(res, 200, { ...post, commentaires: commentaires || [] });
     });
   });
-  return;
+  return true;
 }
 
 /**
@@ -254,7 +316,7 @@ if (pathname === '/api/posts' && req.method === 'POST') {
       // Erreurs de parsing d'image ou multipart
       respond(res, 400, { error: err.message });
     });
-  return;
+  return true;
 }
 
 /**
@@ -332,7 +394,7 @@ if (pathname.includes('/api/posts/') && pathname.includes('/commentaires') && re
       }
     );
   });
-  return;
+  return true;
 }
 
 /**
@@ -361,3 +423,9 @@ if (pathname.includes('/api/posts/') && pathname.includes('/commentaires') && re
  * - POST /api/posts/:id/like (aimer un post)
  * - POST /api/posts/:id/unlike (ne plus aimer)
  */
+  
+  // Aucune route n'a été correspondance
+  return false;
+}
+
+module.exports = { handleApiRoutes };

@@ -4,14 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Forum - Blog</title>
-  <link rel="stylesheet" href="animations.css">
+  <link rel="stylesheet" href="/public/animations.css">
 </head>
 <body>
   <div class="container">
     <header>
       <h1>💬 Forum & Blog</h1>
-      <p>Partagez vos idées et découvrez les posts de la communauté</p>
+      <nav class="header-nav">
+        <a href="/public/2animation.html" class="nav-link">Accueil</a>
+        <a href="/" class="nav-link active">Forum</a>
+      </nav>
     </header>
+
+    <section class="hero">
+      <img class="hero-bg" src="/uploads/cover.jpg" alt="">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p>Partagez vos idées et découvrez les posts de la communauté</p>
+      </div>
+    </section>
 
     <main>
       <!-- Formulaire pour créer un post -->
@@ -30,14 +41,25 @@
             <label for="contenu">Contenu</label>
             <textarea id="contenu" name="contenu" required></textarea>
           </div>
+          <div class="form-group">
+            <label for="image">Image (optionnel)</label>
+            <input type="file" id="image" name="image" accept="image/*">
+          </div>
           <button type="submit">Publier le post</button>
         </form>
       </div>
 
-      <!-- Liste des posts -->
+      <!-- POSTS AVEC ANIMATIONS D'APPARITION -->
       <div class="posts-section">
         <h2>Tous les posts</h2>
-        <div id="postsList"></div>
+        <div id="postsList">
+          <div class="post entered">
+            <img src="/uploads/1622548800000-xyz.jpg" alt="Post" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px;">
+            <h3>Mon premier post</h3>
+            <div class="post-meta">Par jdupont • 28/05/2026</div>
+            <div class="post-content">Contenu du post...</div>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -90,18 +112,28 @@
       const auteur = document.getElementById('auteur').value;
       const titre = document.getElementById('titre').value;
       const contenu = document.getElementById('contenu').value;
+      const image = document.getElementById('image').files[0];
+
+      const formData = new FormData();
+      formData.append('titre', titre);
+      formData.append('contenu', contenu);
+      formData.append('utilisateur_id', 1);
+      if (image) {
+        formData.append('image', image);
+      }
 
       try {
         const response = await fetch('/api/posts', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ titre, contenu, auteur })
+          body: formData
         });
 
         if (response.ok) {
           alert('Post publié avec succès!');
           document.getElementById('postForm').reset();
           loadPosts();
+        } else {
+          alert('Erreur lors de la publication');
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -125,11 +157,21 @@
 
         postsList.innerHTML = posts.map(post => `
           <div class="post" onclick="loadPostDetail(${post.id})">
+            ${post.image_path ? `<img src="/${post.image_path}" alt="${escapeHtml(post.titre)}" style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;">` : ''}
             <h3>${escapeHtml(post.titre)}</h3>
-            <div class="post-meta">Par <strong>${escapeHtml(post.auteur)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+            <div class="post-meta">Par <strong>${escapeHtml(post.pseudo)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
             <div class="post-content">${escapeHtml(post.contenu.substring(0, 150))}...</div>
           </div>
         `).join('');
+        
+        // Ajouter l'animation d'apparition
+        setTimeout(() => {
+          document.querySelectorAll('.post').forEach((post, index) => {
+            setTimeout(() => {
+              post.classList.add('entered');
+            }, index * 100);
+          });
+        }, 50);
       } catch (error) {
         console.error('Erreur:', error);
         postsList.innerHTML = '<div class="empty-state">Erreur lors du chargement des posts</div>';
@@ -148,7 +190,8 @@
 
         postDetail.innerHTML = `
           <h2>${escapeHtml(post.titre)}</h2>
-          <div class="post-meta">Par <strong>${escapeHtml(post.auteur)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+          <div class="post-meta">Par <strong>${escapeHtml(post.pseudo)}</strong> • ${new Date(post.date_creation).toLocaleDateString('fr-FR')}</div>
+          ${post.image_path ? `<img src="/${post.image_path}" alt="${escapeHtml(post.titre)}" style="width: 100%; max-height: 500px; object-fit: cover; border-radius: 8px; margin: 20px 0;">` : ''}
           <div style="margin-top: 20px; line-height: 1.6;">${escapeHtml(post.contenu)}</div>
           
           ${post.commentaires && post.commentaires.length > 0 ? `
@@ -157,7 +200,7 @@
               ${post.commentaires.map(comm => `
                 <div class="commentaire">
                   <div class="commentaire-meta">
-                    <strong>${escapeHtml(comm.auteur)}</strong> • ${new Date(comm.date_creation).toLocaleDateString('fr-FR')}
+                    <strong>${escapeHtml(comm.pseudo)}</strong> • ${new Date(comm.date_creation).toLocaleDateString('fr-FR')}
                   </div>
                   <div>${escapeHtml(comm.contenu)}</div>
                 </div>
@@ -177,14 +220,13 @@
     document.getElementById('commentForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const auteur = document.getElementById('commentAuteur').value;
       const contenu = document.getElementById('commentContenu').value;
 
       try {
         const response = await fetch(`/api/posts/${currentPostId}/commentaires`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ auteur, contenu })
+          body: JSON.stringify({ utilisateur_id: 1, contenu })
         });
 
         if (response.ok) {

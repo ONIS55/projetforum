@@ -146,6 +146,20 @@ function initializeDB() {
     if (err) console.error(' Erreur index likes_commentaires_unique:', err);
     else console.log(' Index idx_likes_commentaires_unique créé');
   });
+
+  // Créer un utilisateur par défaut si aucun n'existe
+  db.get(`SELECT id FROM utilisateurs WHERE id = 1`, (err, row) => {
+    if (!row) {
+      db.run(
+        `INSERT OR IGNORE INTO utilisateurs (id, pseudo, email, mot_de_passe, prenom, nom) VALUES (?, ?, ?, ?, ?, ?)`,
+        [1, 'utilisateur', 'utilisateur@forum.local', 'hash_password', 'Utilisateur', 'Par Défaut'],
+        (err) => {
+          if (err) console.error(' Erreur création utilisateur défaut:', err);
+          else console.log(' Utilisateur par défaut créé');
+        }
+      );
+    }
+  });
 }
 
 // ==================== FONCTIONS INSERT ====================

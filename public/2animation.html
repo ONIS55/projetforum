@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Showcase - Animations Avancées</title>
+  <link rel="stylesheet" href="/public/2animation.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">💬 Mon Site</div>
+    <ul class="links">
+      <li><a href="/public/2animation.html" class="active">Accueil</a></li>
+      <li><a href="/">Forum</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <h1>Bienvenue !</h1>
+    <p>Découvrez nos patterns d'animations avancées</p>
+    <button onclick="document.getElementById('animations').scrollIntoView({behavior: 'smooth'})">Aller</button>
+  </section>
+
+  <!-- Main Content -->
+  <div class="container" id="animations">
+    <!-- Section 1: Navigation avec fondu -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <h2 class="section-title">Navigation avec fondu (fade-out)</h2>
+      </div>
+      
+      <div class="steps">
+        <div class="step">
+          <div class="step-image fade-example">
+            <div class="fade-header"></div>
+            <div class="fade-content"></div>
+            <div class="fade-button"></div>
+          </div>
+          <div class="step-label">
+            <strong>1. Etat initial</strong>
+            Page visible
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image fade-example" style="opacity: 0.5;">
+            <div class="fade-header"></div>
+            <div class="fade-content"></div>
+            <div class="fade-button"></div>
+          </div>
+          <div class="step-label">
+            <strong>2. Au clic "Aller"</strong>
+            Fondu (opacity: 0)
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image fade-example" style="opacity: 0;">
+            <div class="fade-header"></div>
+            <div class="fade-content"></div>
+            <div class="fade-button"></div>
+          </div>
+          <div class="step-label">
+            <strong>3. Transition</strong>
+            Navigation en cours
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image fade-example">
+            <div class="fade-header"></div>
+            <div class="fade-content"></div>
+            <div class="fade-button"></div>
+          </div>
+          <div class="step-label">
+            <strong>4. Nouvelle page</strong>
+            Affichée
+          </div>
+        </div>
+      </div>
+
+      <div class="section-description">
+        <h3>Description</h3>
+        <p>Cette animation crée une transition douce lors de la navigation entre pages. Le contenu disparaît progressivement (fade-out), puis la nouvelle page apparaît. Parfait pour les transitions de page professionnelles.</p>
+      </div>
+    </div>
+
+    <!-- Section 2: Entrée fluide de message -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <h2 class="section-title">Entrée fluide d'un message</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-image message-example">
+            <div class="message-item"></div>
+            <div class="message-item"></div>
+            <div class="message-item small"></div>
+          </div>
+          <div class="step-label">
+            <strong>1. Etat initial</strong>
+            Pas de message
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image message-example">
+            <div class="message-item"></div>
+            <div class="message-item"></div>
+            <div class="message-item small" style="opacity: 0; transform: translateY(8px);"></div>
+          </div>
+          <div class="step-label">
+            <strong>2. Inséré</strong>
+            translateY(8px) + opacity: 0
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image message-example">
+            <div class="message-item"></div>
+            <div class="message-item"></div>
+            <div class="message-item small" style="opacity: 0.5; transform: translateY(4px);"></div>
+          </div>
+          <div class="step-label">
+            <strong>3. Animation</strong>
+            220ms cubic-bezier
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image message-example">
+            <div class="message-item"></div>
+            <div class="message-item"></div>
+            <div class="message-item small"></div>
+          </div>
+          <div class="step-label">
+            <strong>4. Visible</strong>
+            translateY(0) + opacity: 1
+          </div>
+        </div>
+      </div>
+
+      <div class="section-description">
+        <h3>Description</h3>
+        <p>Cette animation fait glisser et apparaître les éléments progressivement. Idéale pour animer l'arrivée de nouveaux messages, commentaires, ou tout élément ajouté dynamiquement au DOM.</p>
+      </div>
+    </div>
+
+    <!-- Section 3: Lazy-loading des images -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <h2 class="section-title">Lazy-loading des images</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-image lazy-example">
+            <div class="lazy-img"></div>
+            <div class="lazy-img"></div>
+            <div class="lazy-img"></div>
+            <div class="lazy-img"></div>
+          </div>
+          <div class="step-label">
+            <strong>1. Images hors vue</strong>
+            Placeholders
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image lazy-example">
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img"></div>
+            <div class="lazy-img"></div>
+          </div>
+          <div class="step-label">
+            <strong>2. Dans viewport</strong>
+            Observer détecte
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image lazy-example">
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+          </div>
+          <div class="step-label">
+            <strong>3. Scroll bas</strong>
+            Plus d'images chargées
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-image lazy-example">
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+            <div class="lazy-img fade-in"></div>
+          </div>
+          <div class="step-label">
+            <strong>4. Toutes visibles</strong>
+            Chargement progressif
+          </div>
+        </div>
+      </div>
+
+      <div class="section-description">
+        <h3>Description</h3>
+        <p>Charge les images uniquement quand elles deviennent visibles dans le viewport. Réduit la bande passante et améliore les performances initiales de la page en chargeant progressivement.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Animation au scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '50px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animation = 'slideUp 0.6s ease-out';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.section').forEach(section => {
+      observer.observe(section);
+    });
+  </script>
+</body>
+</html>

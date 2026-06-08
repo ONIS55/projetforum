@@ -36,3 +36,7 @@ server.listen(PORT, () => {
 ╚════════════════════════════════════════════════════════════╝
   `);
 });
+
+server.on('error', (err) => {
+  console.error('Erreur serveur:', err);
+});
