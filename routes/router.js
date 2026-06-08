@@ -26,7 +26,7 @@ const { handleApiRoutes } = require('../Post/commandaire/post-commentaires.js');
  * @param {Function} callback - Callback(data)
  */
 /**
- * Parser le body JSON/urlencoded (pas utilisé ici, voir post-commaitres-api.js)
+ * Parser le body JSON/urlencoded (pas utilisé ici, voir post-commentaires-api.js)
  */
 function parseBody(req, callback) {
   let body = '';

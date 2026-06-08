@@ -271,7 +271,7 @@ const posts = await obtenirPosts();
 **Paramètres** :
 | Nom | Type | Requis | Description |
 |-----|------|--------|-------------|
-| `post_id` | integer | ✅ | ID du post |
+| `post_id`  | integer|  ID du post |
 
 **Retour** : Promise
 - ✅ **Succès** : Tableau des commentaires (triés par date croissante)
@@ -304,7 +304,7 @@ const comments = await obtenirCommentairesParPost(7);
 **Paramètres** :
 | Nom | Type | Requis | Description |
 |-----|------|--------|-------------|
-| `pseudo` | string | ✅ | Pseudo de l'utilisateur |
+| `pseudo`   | string | Pseudo de l'utilisateur |
 
 **Retour** : Promise
 - ✅ **Succès** : Objet utilisateur complet
@@ -325,7 +325,7 @@ const user = await obtenirUtilisateurParPseudo('john_doe');
 **Paramètres** :
 | Nom | Type | Requis | Description |
 |-----|------|--------|-------------|
-| `post_id` | integer | ✅ | ID du post |
+| `post_id`  | integer|  ID du post |
 
 **Retour** : Promise
 - ✅ **Succès** : Objet post complet
@@ -359,14 +359,14 @@ const post = await obtenirPostParId(42);
 **Rôle** : Récupère les posts avec plusieurs filtres combinables (pagination, catégorie, mes posts, posts aimés)
 
 **Paramètres** :
-| Nom | Type | Requis | Description |
-|-----|------|--------|-------------|
-| `user_id` | integer | ❌ | ID de l'utilisateur pour les filtres personnalisés |
-| `filtre_mine` | boolean | ❌ | true = affiche SEULEMENT les posts de l'utilisateur (défaut: false) |
-| `filtre_likes` | boolean | ❌ | true = affiche SEULEMENT les posts que l'utilisateur a aimés (défaut: false) |
-| `categorie_id` | integer | ❌ | Filtre par catégorie spécifique (défaut: null) |
-| `limit` | integer | ❌ | Nombre de posts par page (défaut: 10) |
-| `offset` | integer | ❌ | Position de départ (pagination) (défaut: 0) |
+| Nom | Type    |  Requis | Description |
+|-----|------   |-------- |-------------|
+| `user_id`     | integer | ID de l'utilisateur pour les filtres personnalisés |
+| `filtre_mine` | boolean |  true = affiche SEULEMENT les posts de l'utilisateur (défaut: false) |
+| `filtre_likes`| boolean |  true = affiche SEULEMENT les posts que l'utilisateur a aimés (défaut: false) |
+| `categorie_id`| integer |   Filtre par catégorie spécifique (défaut: null) |
+| `limit`       | integer |  Nombre de posts par page (défaut: 10) |
+| `offset`      | integer |   Position de départ (pagination) (défaut: 0) |
 
 **Retour** : Promise
 - ✅ **Succès** : Tableau des posts filtrés avec statistiques
@@ -425,11 +425,11 @@ await obtenirPostsAvecFiltres({
 **Rôle** : Modifie le titre et le contenu d'un post existant
 
 **Paramètres** :
-| Nom | Type | Requis | Description |
-|-----|------|--------|-------------|
-| `post_id` | integer | ✅ | ID du post à modifier |
-| `titre` | string | ✅ | Nouveau titre |
-| `contenu` | string | ✅ | Nouveau contenu |
+| Nom |Type | Requis  | Description |
+|-----|-----|-------- |-------------|
+| `post_id` | integer |  ID du post à modifier |
+| `titre`   | string  |  Nouveau titre |
+| `contenu` | string  |  Nouveau contenu |
 
 **Retour** : Promise
 - ✅ **Succès** : undefined (pas de valeur de retour)
@@ -455,7 +455,7 @@ await mettreAJourPost(12, 'Nouveau titre', 'Nouveau contenu du post');
 **Paramètres** :
 | Nom | Type | Requis | Description |
 |-----|------|--------|-------------|
-| `post_id` | integer | ✅ | ID du post à supprimer |
+| `post_id`  | integer | ✅ | ID du post à supprimer |
 
 **Retour** : Promise
 - ✅ **Succès** : undefined
@@ -557,13 +557,13 @@ commentaires (1) ─→ (∞) likes_commentaires
 
 Les index créés optimisent les requêtes les plus fréquentes :
 
-| Index | colone | ça sert |
-|-------|--------|---------|
-| `idx_posts_user_id` | posts.utilisateur_id | Affichage des posts d'un utilisateur |
-| `idx_posts_categorie_id` | posts.categorie_id | Filtrage par catégorie |
-| `idx_commentaires_post_id` | commentaires.post_id | Affichage des commentaires d'un post |
-| `idx_commentaires_user_id` | commentaires.utilisateur_id | Affichage des commentaires d'un utilisateur |
-| `idx_likes_posts_unique` | likes_posts (2 colonnes) | Éviter les likes en doublon |
+|Index                            | colone                          |ça sert 
+|-------------------------        |
+| `idx_posts_user_id`             | posts.utilisateur_id            | Affichage des posts d'un utilisateur |
+| `idx_posts_categorie_id`        | posts.categorie_id              | Filtrage par catégorie |
+| `idx_commentaires_post_id`      | commentaires.post_id            | Affichage des commentaires d'un post |
+| `idx_commentaires_user_id`      | commentaires.utilisateur_id     | Affichage des commentaires d'un utilisateur |
+| `idx_likes_posts_unique`        | likes_posts (2 colonnes)        | Éviter les likes en doublon |
 | `idx_likes_commentaires_unique` | likes_commentaires (2 colonnes) | Éviter les likes en doublon |
 
 ---
@@ -617,23 +617,24 @@ const comments = await obtenirCommentairesParPost(postId);
 
 ## ✅ RÉSUMÉ DES FONCTIONS
 
-| Fonction          | Type | Retour | Utilité |
-|----------|------|--------|---------|
-| `initializeDB()`= À quoi ça sert : Préparer la base de données au démarrage du serveur | Setup | void | Crée les tables et index |
-| `insererUtilisateur()` | INSERT | Promise(id) | Ajouter un utilisateur |
-| `insererPost()` | INSERT | Promise(id) | Créer un post |
-| `insererCommentaire()` | INSERT | Promise(id) | Ajouter un commentaire |
-| `insererCategorie()` | INSERT | Promise(id) | Créer une catégorie |
-| `obtenirUtilisateurs()` | SELECT | Promise(array) | Lister tous les utilisateurs |
-| `obtenirCategories()` | SELECT | Promise(array) | Lister les catégories |
-| `obtenirPosts()` | SELECT | Promise(array) | Lister tous les posts |
-| `obtenirCommentairesParPost()` | SELECT | Promise(array) | Lister les commentaires |
-| `obtenirUtilisateurParPseudo()` | SELECT | Promise(object) | Trouver un utilisateur |
-| `obtenirPostParId()` | SELECT | Promise(object) | Trouver un post |
-| `obtenirPostsAvecFiltres()` | SELECT | Promise(array) | Lister avec filtres |
-| `mettreAJourPost()` | UPDATE | Promise(void) | Modifier un post |
-| `supprimerPost()` | DELETE | Promise(void) | Supprimer un post |
-| `supprimerCommentaire()` | DELETE | Promise(void) | Supprimer un commentaire |
+|  Fonction                      | Type             | Retour                             | Utilité |
+|----------                      |-----  -          |--------                            |-----
+| `initializeDB()`               | Setup            | void                               | Crée les tables et index |
+= À quoi ça sert : Préparer la base de données au démarrage du serveur           
+| `insererUtilisateur()`         | INSERT           | Promise(id)                        | Ajouter un utilisateur |
+| `insererPost()`                | INSERT           | Promise(id)                        | Créer un post |
+| `insererCommentaire()`         | INSERT           | Promise(id)                        | Ajouter un commentaire |
+| `insererCategorie()`           | INSERT           | Promise(id)                        | Créer une catégorie |
+| `obtenirUtilisateurs()`        | SELECT           | Promise(array)                     |Lister tous les utilisateurs 
+| `obtenirCategories()`          | SELECT           | Promise(array)                     | Lister les catégories |
+| `obtenirPosts()`               | SELECT           | Promise(array)                     | Lister tous les posts |
+| `obtenirCommentairesParPost()` | SELECT           | Promise(array)                     | Lister les commentaires |
+| `obtenirUtilisateurParPseudo()`| SELECT           | Promise(object)                    | Trouver un utilisateur |
+| `obtenirPostParId()`           | SELECT           | Promise(object)                    | Trouver un post |
+| `obtenirPostsAvecFiltres()`    | SELECT           | Promise(array)                     | Lister avec filtres |
+| `mettreAJourPost()`            | UPDATE           | Promise(void)                      | Modifier un post |
+| `supprimerPost()`              | DELETE           | Promise(void)                      | Supprimer un post |
+| `supprimerCommentaire()`       | DELETE           | Promise(void)                      | Supprimer un commentaire |
 
 ---
 
